@@ -17,9 +17,10 @@ As of late October 2026 no Linux distribution installs on an M4 Pro MacBook Pro:
   with GPU acceleration on the **16-inch** M4 Pro (`J616s`), and Aurora's bootloader
   [aura](https://github.com/aurora-silicon/aura) and kernel now carry that board upstream.
 
-The 14-inch uses the same T6040 die as the 16-inch. In the 48 GB configuration it is the same
-14-core CPU / 20-core GPU bin. What differs is the board: panel, speakers, thermals, Wi-Fi antenna
-profile, per-unit calibration. On the M1 Pro, Asahi's 14-inch and 16-inch trees differ in exactly
+The 14-inch uses the same T6040 die as the 16-inch, here in the lower bin: 12 CPU cores and a
+16-core GPU instead of 14 and 20. The board differs too: panel, speakers, thermals, Wi-Fi antenna
+profile, per-unit calibration. The GPU driver currently admits only the 20-core layout, so the bin is
+a work item in its own right, not just the board. On the M1 Pro, Asahi's 14-inch and 16-inch trees differ in exactly
 six properties. This repository does that work for the M4 Pro.
 
 ## Approach
@@ -60,7 +61,7 @@ and per-unit calibration. They identify one machine and cannot be redistributed.
 
 | | |
 |---|---|
-| Machine | MacBook Pro 14-inch, M4 Pro, 48 GB, 1 TB |
+| Machine | MacBook Pro 14-inch, M4 Pro (12-core CPU, 16-core GPU), 48 GB, 1 TB |
 | Board | J614s (ADT `target-type`) |
 | SoC | T6040 (`chip-id` 0x6040) |
 | Reference board | J616s, MacBook Pro 16-inch M4 Pro |

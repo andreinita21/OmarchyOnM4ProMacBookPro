@@ -9,9 +9,13 @@ Written 2026-10-30 from the state of the aurora-silicon and jgoyvaerts repositor
 | Board (ADT `target-type`) | J616s | J614s |
 | Model identifier | Mac16,7 | Mac16,8 (verify with `sysctl hw.model`) |
 | SoC (`chip-id`) | 0x6040 (T6040, `arm-io,t6041`) | 0x6040, identical die |
-| CPU / GPU in the 48 GB config | 14 CPU / 20 GPU cores | 14 CPU / 20 GPU cores (verify in About This Mac) |
+| CPU / GPU | 14 CPU (10P+4E) / 20 GPU cores | **12 CPU (8P+4E) / 16 GPU cores** (Andrei's unit; a lower bin of the same die) |
 
-Same silicon. Everything SoC-level (NVMe, PCIe, USB, DARTs, AOP, GPU driver, cpufreq, PMP) carries over.
+Same silicon, different bin. Two P cores and four GPU cores are fused off. aura prunes CPU nodes by MPIDR
+at boot and derives the active GPU core count from the fused mask, so the loader copes. The kernel GPU
+driver does not yet: `drivers/gpu/drm/asahi/hw/t6040.rs` admits exactly `(2 clusters, 20 cores)` and the
+compute operand-state buffer sizes were measured on the 20-core part. Admitting the 16-core layout is a
+work item of its own (section 2). Everything else SoC-level (NVMe, PCIe, USB, DARTs, AOP, GPU driver, cpufreq, PMP) carries over.
 What differs is the board: panel, speaker tuning, thermals/fans, Wi-Fi antenna profile, trackpad firmware,
 per-unit calibration. On the M1 Pro, Asahi's 14-inch and 16-inch trees differ in exactly:
 `compatible`/`model`, `panel` (compatible + width/height mm), `brcm,board-type` (Wi-Fi and BT),
@@ -69,6 +73,21 @@ J616s-specific spots found in aura so far:
    `MacBook Pro J614.conf` in userspace.
 4. Panel driver (`drivers/gpu/drm/apple/...`): find the `apple,panel-j616` match and add `apple,panel-j614`.
 5. Anything else that greps for `j616` in drivers once the clone is in.
+
+### GPU on the 16-core bin (kernel, `drivers/gpu/drm/asahi/`)
+5b. `hw/t6040.rs`: `core_layout.cores` is `Some((2, 20))`; the probe refuses anything else
+    (`g17/mod.rs`, "Unsupported GPU core layout"). Add a 16-core admission: `(2, 16)` with a
+    `TWO_BY_EIGHT` operand state in `g17/fw/compute.rs`. That struct's own comment gives the layout
+    rule (two preemption banks of three 0x800-byte records per core, then the bank end, then
+    per-cluster tails), and the two measured constants `ONE_BY_SIX` and `TWO_BY_TEN` both satisfy:
+    bank = cores*0x1800; r0a5c9 = bank; r10099 = bank + 0x405; r10091 = 2*bank + 0x400;
+    r10229 = 2*bank + 0x800; r140a8 = r10229 + clusters*0x800; r0a5c1 = 5.
+    For 2x8 that predicts r0a5c9 0x18000, r10099 0x18405, r10091 0x30400, r10229 0x30800,
+    r140a8 0x31800. The buffer `size` does not follow an obvious rule (0x14000 and 0x44000 measured),
+    so it must be measured: read what macOS programs on this unit through an aura proxy session before
+    trusting any of these numbers. `Deflake::TWO_CLUSTERS` depends on cluster count only and should hold.
+    aura's power model scales by `active_cores / 10` per cluster and reads the efuse leakage itself, so
+    the loader side needs no change for the bin.
 
 ### Bootloader (`aurora-silicon/aura`)
 6. Add `"apple,j614s"` to `dcp_boards_t6041` in `src/kboot_display_handoff.c`.
@@ -132,7 +151,7 @@ aura proxy and RAM boots; a USB stick for 1TR; a full backup; ideally a second M
 
 ## 6. Risks
 
-- No J614s has ever booted this stack. Expect the display hand-off and GPU admission to need real work.
+- No J614s has ever booted this stack, and no 16-core M4 Pro GPU has run the Aurora driver at all. Expect the display hand-off and GPU admission to need real work.
 - A wrong Stage 1 leaves the stub macOS unbootable; the main macOS stays selectable at the startup picker.
   DFU restore via Apple Configurator from another Mac is the floor.
 - macOS updates change the ADT and firmware addresses; the kernel tree and loader must follow.
