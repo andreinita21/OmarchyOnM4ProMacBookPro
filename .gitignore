@@ -1,0 +1,18 @@
+# Upstream source trees (cloned by scripts/fetch-upstream.sh, several GB)
+upstream/
+
+# This Mac's own device tree, firmware and calibration. Apple firmware cannot be
+# redistributed and the ADT identifies the unit. Never commit.
+mac-dump/
+firmware/
+*.plist
+*.adt
+*.bin
+*.tar.gz
+*.img
+
+# Build output
+build/
+out/
+*.dtb
+*.o

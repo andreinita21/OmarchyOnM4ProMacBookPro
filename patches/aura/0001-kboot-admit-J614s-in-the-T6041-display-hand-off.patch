@@ -1,0 +1,38 @@
+From f084a922561999492a9f85d66581b4ba02e57b73 Mon Sep 17 00:00:00 2001
+From: Nita Andrei <andreisebastian.nita@gmail.com>
+Date: Fri, 30 Oct 2026 07:31:34 +0200
+Subject: [PATCH] kboot: admit J614s in the T6041 display hand-off
+
+The 14-inch M4 Pro (J614s) carries the same T6041 display block as the
+J616s. Add it to the board list so the internal panel hand-off is
+attempted on it too. Not yet tested on J614s hardware.
+---
+ src/kboot_display_handoff.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/kboot_display_handoff.c b/src/kboot_display_handoff.c
+index c3b573d..51ed09f 100644
+--- a/src/kboot_display_handoff.c
++++ b/src/kboot_display_handoff.c
+@@ -391,14 +391,14 @@ static const struct dcp_soc dcp_soc_t6031 = {
+  * the kernel accepts only the 26.6.2 firmware. No opt-in: nothing happens unless the device tree
+  * describes this display block (dcp6_dt_describes()), and the display nodes stay disabled.
+  */
+-static const char *const dcp_boards_t6041[] = {"apple,j616s", NULL};
++static const char *const dcp_boards_t6041[] = {"apple,j616s", "apple,j614s", NULL};
+ 
+ static const struct dcp_soc dcp_soc_t6041 = {
+     .name = "T6041",
+     .chip = T6040,
+     .compat = "apple,t6040",
+     .boards = dcp_boards_t6041,
+-    .boards_desc = "J616s",
++    .boards_desc = "J616s/J614s",
+     .dcp_compat = "apple,t6041-dcp",
+     .disp_compat = "apple,display-subsystem",
+     .marker = "apple,t6041-handoff",
+
+base-commit: 0ca7bf85c9946a7ec90a5701c126b70ed144bd34
+-- 
+2.56.0
+
