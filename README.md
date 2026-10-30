@@ -38,7 +38,8 @@ Bring-up order, safest first:
 
 1. Dump the Mac's device tree and firmware from macOS (read-only, `scripts/mac-dump.sh`).
 2. Generate the J614s device tree from that dump.
-3. RAM-boot Linux over USB-C from a Linux host with aura's proxy. Nothing touches the SSD.
+3. Create the 26.6.2 stub macOS with aura as its boot object, then RAM-boot Linux over USB-C from a
+   Linux host with aura's proxy. The root partition does not exist yet at this point.
 4. Only once a desktop comes up: partition, install aura Stage 1 from Recovery, install Arch Linux
    ARM and Omarchy.
 
@@ -65,6 +66,8 @@ and per-unit calibration. They identify one machine and cannot be redistributed.
 | Board | J614s (ADT `target-type`) |
 | SoC | T6040 (`chip-id` 0x6040) |
 | Reference board | J616s, MacBook Pro 16-inch M4 Pro |
+| macOS | 27.0.1 on the main volume; Linux will boot through a 26.6.2 stub (Aurora's T6040 firmware pin) |
+| Wi-Fi island | mriya (BCM4388) |
 
 ## Build host
 

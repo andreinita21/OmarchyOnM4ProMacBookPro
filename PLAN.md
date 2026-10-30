@@ -9,6 +9,9 @@ Written 2026-10-30 from the state of the aurora-silicon and jgoyvaerts repositor
 | Board (ADT `target-type`) | J616s | J614s |
 | Model identifier | Mac16,7 | Mac16,8 (verify with `sysctl hw.model`) |
 | SoC (`chip-id`) | 0x6040 (T6040, `arm-io,t6041`) | 0x6040, identical die |
+| macOS on the main volume | 26.6.2 stub for Linux; system firmware mBoot-20457.1.29 | **27.0.1 (26A434)**, system firmware mBoot-20457.1.29 (read 2026-10-30) |
+| Wi-Fi island (`module-instance`) | hostomel | **mriya** |
+| Disk | | 1 TB; 314 GB free in the APFS container; Time Machine volume on an external 1 TB drive |
 | CPU / GPU | 14 CPU (10P+4E) / 20 GPU cores | **12 CPU (8P+4E) / 16 GPU cores** (Andrei's unit; a lower bin of the same die) |
 
 Same silicon, different bin. Two P cores and four GPU cores are fused off. aura prunes CPU nodes by MPIDR
@@ -21,6 +24,24 @@ per-unit calibration. On the M1 Pro, Asahi's 14-inch and 16-inch trees differ in
 `compatible`/`model`, `panel` (compatible + width/height mm), `brcm,board-type` (Wi-Fi and BT),
 `aop_audio` chassis name, `sound` compatible + model, and the Touch ID calibration file name.
 Expect the same list here, plus fan curves.
+
+## 0b. The firmware version pin (read from the Mac on 2026-10-30)
+
+Everything Aurora has for T6040 is pinned to the **macOS 26.6.2 (25G83)** coprocessor firmware: aura's
+display hand-off bails unless the OS firmware is 26.6.2 (`dcp_soc_t6041.os_fw = V26_6_2`), the GPU
+driver admits only the 25G83 GPU firmware images (`hw/t6040.rs`), the ISP and AOP paths assume the same
+build. Andrei's Mac runs 27.0.1 (26A434). This is not a blocker: on Apple Silicon the coprocessor
+firmware comes from the macOS install that owns the boot policy, so the small stub macOS that Linux
+boots through must be **26.6.2**, while the main macOS stays at 27.0.1. The 16-inch reference does
+exactly this (its loader checks system firmware mBoot-20457.1.29 with OS firmware mBoot-18000.161.10).
+Consequences:
+- The device-tree values that follow the firmware build (ISP and GPU firmware regions, DAPF entries)
+  must come from the ADT as seen when booting through the 26.6.2 stub, not from today's dump.
+- Firmware for Linux (Wi-Fi, Bluetooth, camera setfile) is extracted from the 26.6.2 IPSW, as the
+  Asahi installer does, not from the running 27.0.1.
+- There is no disk-free bring-up: aura must be installed as the stub's boot object (`kmutil` from
+  recoveryOS) before the first proxy session. The stub plus ESP cost about 3 GB; the Linux root comes
+  later. The RAM boot of Linux over USB-C still writes nothing to the root partition.
 
 ## 1. Which stack to build on
 
@@ -107,8 +128,9 @@ J616s-specific spots found in aura so far:
 
 1. **Dump the ADT and firmware on macOS** (section 4). No change to the Mac.
 2. **Generate the J614s device tree and loader patch** on the Arch build host from the dump.
-3. **RAM boot over USB-C from the Arch laptop** using aura's proxy (`proxyclient`), with the
-   `t6040-j614s-tether.dtb`. Nothing is written to the SSD. This is how the J616s was brought up
+3. **Stub + Stage 1**: create the 26.6.2 stub macOS and install aura Stage 1 as its boot object
+   (Asahi-installer style, from 1TR). About 3 GB. Then **RAM boot over USB-C from the Arch laptop**
+   using aura's proxy (`proxyclient`), with the `t6040-j614s-tether.dtb`. Nothing else is written. This is how the J616s was brought up
    (`aura/docs/j616s-bringup.md`). Iterate until the kernel reaches a shell, then display, then the rest.
 4. **Partition**: shrink macOS, create a stub macOS (boot policy owner) and an ESP + Linux root, as the
    Asahi installer does. Needs ~110 GB free. Full backup first.
@@ -117,9 +139,10 @@ J616s-specific spots found in aura so far:
    (`aura/docs/j700-install.md`).
 6. **Install Arch Linux ARM + Omarchy** on the root. Then packages, firmware, speakers, suspend.
 
-## 4. What Andrei has to do on the Mac (macOS)
+## 4. What was collected from the Mac (done over SSH on 2026-10-30)
 
-Run in Terminal and bring the output files to the Arch laptop:
+`scripts/mac-dump.sh` ran on the Mac; the result is in `mac-dump/` (ignored by git). Original
+instructions, for another unit:
 
 ```sh
 mkdir -p ~/j614s-dump && cd ~/j614s-dump

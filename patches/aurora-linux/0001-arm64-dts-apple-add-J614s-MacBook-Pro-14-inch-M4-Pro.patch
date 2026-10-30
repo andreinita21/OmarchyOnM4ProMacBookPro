@@ -1,4 +1,4 @@
-From ccc9a7cedecdfd45209a7f3e617709ca4ee9024d Mon Sep 17 00:00:00 2001
+From 0f3e2827753692d0b091e529cc46ae8e976c9a54 Mon Sep 17 00:00:00 2001
 From: Nita Andrei <andreisebastian.nita@gmail.com>
 Date: Fri, 30 Oct 2026 07:31:31 +0200
 Subject: [PATCH] arm64: dts: apple: add J614s (MacBook Pro 14-inch, M4 Pro) as
@@ -20,10 +20,10 @@ Draft: compiles (dtbs), not yet booted on hardware.
 ---
  arch/arm64/boot/dts/apple/Makefile            |    2 +
  .../boot/dts/apple/t6040-j614s-tether.dts     |   49 +
- arch/arm64/boot/dts/apple/t6040-j614s.dts     | 4519 +++++++++++++++++
+ arch/arm64/boot/dts/apple/t6040-j614s.dts     | 4527 +++++++++++++++++
  drivers/soc/apple/profile.rs                  |    6 +-
  sound/soc/apple/macaudio.c                    |    4 +
- 5 files changed, 4577 insertions(+), 3 deletions(-)
+ 5 files changed, 4585 insertions(+), 3 deletions(-)
  create mode 100644 arch/arm64/boot/dts/apple/t6040-j614s-tether.dts
  create mode 100644 arch/arm64/boot/dts/apple/t6040-j614s.dts
 
@@ -97,24 +97,32 @@ index 000000000..ca202f125
 +};
 diff --git a/arch/arm64/boot/dts/apple/t6040-j614s.dts b/arch/arm64/boot/dts/apple/t6040-j614s.dts
 new file mode 100644
-index 000000000..ff9ed01b7
+index 000000000..3ffb42b35
 --- /dev/null
 +++ b/arch/arm64/boot/dts/apple/t6040-j614s.dts
-@@ -0,0 +1,4519 @@
+@@ -0,0 +1,4527 @@
 +// SPDX-License-Identifier: GPL-2.0+ OR MIT
 +/*
 + * MacBook Pro (14-inch, M4 Pro, Nov 2024)
 + *
 + * target-type: J614s
 + *
-+ * Derived from t6040-j616s.dts (same T6040 die, 14-inch board). Values that
-+ * come from this board's own Apple Device Tree are marked TODO(J614s ADT) and
-+ * must be regenerated from a J614s dump before the tree is trusted: the
-+ * USB3 tunables (t6040-j616s-usb3.dtsi), the external display includes, the
-+ * ISP/GPU firmware regions, the DAPF entries, the speaker amp addresses and
-+ * sense slots, the SMC keys and the fan curves.
++ * Derived from t6040-j616s.dts: the same T6040 die on the 14-inch board, here
++ * the 12-core CPU / 16-core GPU bin (ADT lists cpu0-7 and cpu10-13; the boot
++ * loader prunes the two missing P cores by MPIDR).
 + *
-+ * Copyright The Asahi Linux Contributors
++ * Checked against this board's ADT (macOS 27.0.1, 26A434): the six SN012776
++ * amps (i2c1 0x38-0x3a, i2c3 0x3b-0x3d, SDZ AP pin 54, IRQ AP pin 55, the same
++ * speaker-config sense slots and amp-tx-zd-config idle masks), the CS42L84 at
++ * i2c2 0x4b (reset NUB pin 58, IRQ AP pin 106), the Mesa sensor on spi2
++ * (power NUB pin 53, data-ready AP pin 116) and the 4388 Wi-Fi module
++ * "mriya" are identical to the J616s apart from the island name.
++ *
++ * Still carried over from the J616s and marked TODO(J614s ADT): the USB3
++ * tunables (t6040-j616s-usb3.dtsi), the external display includes, the ISP
++ * firmware regions (they follow the macOS build of the stub, 26.6.2), the
++ * DAPF entries, the SMC hwmon keys and the fan curves. The panel is the
++ * 3024x1964 14-inch mini-LED; adj-height-mm follows the J314 convention.
 + */
 +
 +/dts-v1/;
@@ -4038,7 +4046,7 @@ index 000000000..ff9ed01b7
 +				reg = <0x100 0 0 0 0>;
 +				/* To be filled by the loader */
 +				local-bd-address = [00 00 00 00 00 00];
-+				brcm,board-type = "apple,hostomel";	/* TODO(J614s firmware): island name of the 14-inch */
++				brcm,board-type = "apple,mriya";
 +				status = "okay";
 +			};
 +
@@ -4046,7 +4054,7 @@ index 000000000..ff9ed01b7
 +				compatible = "pci14e4,4434", "brcm,bcm4329-fmac";
 +				reg = <0 0 0 0 0>;
 +				brcm,ccode-map-trivial;
-+				brcm,board-type = "apple,hostomel";	/* TODO(J614s firmware): island name of the 14-inch */
++				brcm,board-type = "apple,mriya";
 +			};
 +		};
 +	};
@@ -4083,7 +4091,7 @@ index 000000000..ff9ed01b7
 +&dcp {
 +	panel {
 +		compatible = "apple,panel-j614", "apple,panel-mini-led", "apple,panel";
-+		width-mm = <302>;	/* TODO(J614s ADT): panel size */
++		width-mm = <302>;
 +		height-mm = <196>;
 +		adj-height-mm = <189>;
 +		status = "disabled";
