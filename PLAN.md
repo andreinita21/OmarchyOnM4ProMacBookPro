@@ -39,6 +39,15 @@ Consequences:
   must come from the ADT as seen when booting through the 26.6.2 stub, not from today's dump.
 - Firmware for Linux (Wi-Fi, Bluetooth, camera setfile) is extracted from the 26.6.2 IPSW, as the
   Asahi installer does, not from the running 27.0.1.
+- The stub's restore image is the one the Omarchy Mac installer engine (`.31`) and Aurora use for
+  25G83: `UniversalMac_26.6.2_25G83_Restore.ipsw` at
+  `https://updates.cdn-apple.com/2026SummerFCS/fullrestores/140-75212/A2A24B94-1FC1-45A3-93F7-C51B02AF1F4D/UniversalMac_26.6.2_25G83_Restore.ipsw`
+  (minimum iBoot `mBoot-18000.161.10`, minimum SFR `25.7.83.0.0,0`; this Mac's system firmware
+  `mBoot-20457.1.29` is newer, which is the supported direction). The installer's admission tables
+  (`CHIP_MIN_VER`, `DEVICES`, the IPSW `devices` list) do not include 0x6040 or `j614sap`; a developer
+  run needs those entries added, as the engine did for `j700ap`. The engine notes that on 26.6.2 Asahi's
+  Stage 1 made iBoot panic on an M3 Air and only Aurora's Stage 1 booted, so the stub's boot object
+  must be aura from the start.
 - There is no disk-free bring-up: aura must be installed as the stub's boot object (`kmutil` from
   recoveryOS) before the first proxy session. The stub plus ESP cost about 3 GB; the Linux root comes
   later. The RAM boot of Linux over USB-C still writes nothing to the root partition.
